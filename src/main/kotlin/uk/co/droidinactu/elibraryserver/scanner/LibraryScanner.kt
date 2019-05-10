@@ -13,9 +13,7 @@ import java.io.File
 import java.io.FileInputStream
 import java.nio.file.Path
 import java.nio.file.Paths
-import java.util.*
-import java.util.stream.Collectors
-
+import java.util.function.Consumer
 
 /**
  * Created by aspela on 31/08/16.
@@ -37,64 +35,13 @@ class LibraryScanner {
         //   System.setProperty(SimpleLogger.DEFAULT_LOG_LEVEL_KEY, "INFO")
         logger.info("LibraryScanner::scanLibraryForEbooks($rootdir) started")
 
-        lateinit var files: List<String>
-        run {
-            var dirs = findDirs(rootdir)
-
-            files = dirs
-                    .stream()
-                    .parallel()
-                    .flatMap { dir -> findFiles(dir).stream() }
-                    .collect(Collectors.toList())
-        }
-        files
-                .stream()
-                .forEach { file -> readFileData(File(file), rootdir) }
+        FileUtils.getFileList(rootdir).forEach(Consumer<String> { readFileData(File(it), rootdir) })
 
         logger.info("LibraryScanner::scanLibraryForEbooks($rootdir) finished")
     }
 
-    private fun findDirs(dirname: String): Set<String> {
-        logger.debug("ReactiveLibraryScanner::findDirs($dirname) started")
-        var dirnames = HashSet<String>()
-        var f = File(dirname.trim { it <= ' ' })
-        val listOfFiles = f.list()
-
-        dirnames.add(dirname)
-        for (dname in listOfFiles) {
-            f = File(dirname + File.separator + dname)
-            if (f.isDirectory) {
-                dirnames.add(dirname + File.separator + dname)
-                dirnames.addAll(findDirs(dirname + File.separator + dname))
-            }
-        }
-        return dirnames
-    }
-
-    private fun findFiles(dir: String): List<String> {
-        logger.debug("ReactiveLibraryScanner::findFiles($dir) started")
-        var files = ArrayList<String>()
-        var f = File(dir)
-        val filelist = arrayListOf<String>()
-        filelist.addAll(f.list())
-
-        filelist
-                .stream()
-                .forEach { filename ->
-                    f = File(dir + File.separator + filename)
-                    if (f.isFile && (filename.toString().toLowerCase().endsWith("epub")
-                                    || filename.toString().toLowerCase().endsWith("pdf")
-                                    || filename.toString().toLowerCase().endsWith("mobi")
-                                    )
-                    ) {
-                        files.add(dir + File.separator + filename)
-                    }
-                }
-        return files
-    }
-
     private fun readFileData(file: File, librootdir: String) {
-        logger.debug("LibraryScanner::readFileData() started")
+        logger.debug("LibraryScanner::readFileData(${file.name}) started")
         try {
             readFileMetaData(file, librootdir)
         } catch (e: Exception) {
@@ -111,12 +58,6 @@ class LibraryScanner {
         //  ebk.fileName = FilenameUtils.removeExtension(file.absolutePath.substring(ebk.fileDir.length + 1))
         ebk.bookTitle = ebk.fileName
         ebk.lastModified = file.lastModified()
-//        ebk.setCoverImageFromBitmap(
-//                BitmapFactory.decodeResource(
-//                        ctx.resources,
-//                        R.drawable.generic_book_cover
-//                )
-//        )
 
         try {
             val parentDir = file.parent

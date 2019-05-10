@@ -23,12 +23,10 @@ class LibraryScannerTest {
     @Autowired
     lateinit var libScnr: LibraryScanner
 
-
     @Test
     @Tag("FileScanningTests")
     @DisplayName("Test that file scanning adds documents into solr")
     fun scanLibraryForEbooks() {
-        // libScnr.scanLibraryForEbooks(System.getProperty("user.home") + File.separator + "ebooks")
         val ebookPath = Paths.get("z:", "Documents", "ebooks")
         libScnr.scanLibraryForEbooks(ebookPath.toString())
 

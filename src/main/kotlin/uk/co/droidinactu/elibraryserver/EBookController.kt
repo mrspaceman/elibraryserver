@@ -10,14 +10,13 @@ package uk.co.droidinactu.elibraryserver
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.data.domain.PageRequest
 import org.springframework.http.HttpStatus
+import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 import uk.co.droidinactu.elibraryserver.data.EBook
 import uk.co.droidinactu.elibraryserver.data.EBookRepository
-import java.util.*
-import org.springframework.http.ResponseEntity
 import uk.co.droidinactu.elibraryserver.scanner.LibraryScanner
 import java.nio.file.Paths
-
+import java.util.*
 
 /*
  * Copyright 2019 (C) Andy Aspell-Clark
@@ -29,27 +28,31 @@ import java.nio.file.Paths
 @RestController
 class EBookController {
 
+    companion object {
+        const val baseCollectionName = "ebook"
+    }
+
     @Autowired
     lateinit var ebookRepo: EBookRepository
 
     @Autowired
     lateinit var libScanner: LibraryScanner
 
-    @GetMapping("/ebook/rescan")
+    @GetMapping("/${baseCollectionName}/rescan")
     fun rescan(): ResponseEntity<Any> {
         val ebookPath = Paths.get("z:", "Documents", "ebooks")
         libScanner.scanLibraryForEbooks(ebookPath.toString())
         return ResponseEntity<Any>("", HttpStatus.OK)
     }
 
-    @PostMapping("/ebook")
+    @PostMapping("/${baseCollectionName}")
     fun createEBook(@RequestBody ebook: EBook): String {
         val description = "ebook Created"
         ebookRepo.save(ebook)
         return description
     }
 
-    @GetMapping("/ebook")
+    @GetMapping("/${baseCollectionName}")
     fun readEBook(): List<EBook> {
         var allBks = ebookRepo.findAll()
         var ebkList = ArrayList<EBook>()
@@ -57,20 +60,20 @@ class EBookController {
         return ebkList
     }
 
-    @GetMapping("/ebook/{ebookid}")
+    @GetMapping("/${baseCollectionName}/{ebookid}")
     fun readEBook(@PathVariable ebookid: String): EBook {
         return ebookRepo.findById(ebookid)
                 .orElseThrow({ EbookNotFoundException(ebookid) })
     }
 
-    @PutMapping("/ebook")
+    @PutMapping("/${baseCollectionName}")
     fun updateEBook(@RequestBody ebook: EBook): String {
         val description = "EBook Updated"
         ebookRepo.save(ebook)
         return description
     }
 
-    @DeleteMapping("/ebook/{ebookid}")
+    @DeleteMapping("/${baseCollectionName}/{ebookid}")
     fun deleteEBook(@PathVariable ebookid: String): String {
         val description = "ebook Deleted"
         val findById = ebookRepo.findById(ebookid)
@@ -78,12 +81,12 @@ class EBookController {
         return description
     }
 
-    @GetMapping("/ebook/search/{searchTerm}")
+    @GetMapping("/${baseCollectionName}/search/{searchTerm}")
     fun findEBookBySearchTerm(@PathVariable searchTerm: String): List<EBook> {
         return ebookRepo.findByTag(searchTerm)
     }
 
-    @GetMapping("/ebook/search/{searchTerm}/{page}")
+    @GetMapping("/${baseCollectionName}/search/{searchTerm}/{page}")
     fun findEBookBySearchTerm(
             @PathVariable searchTerm: String,
             @PathVariable page: Int): List<EBook> {
